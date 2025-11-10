@@ -1,0 +1,65 @@
+# 基础设置
+use_gpu: True
+device: 0
+backend: torch
+seed: 123
+
+# 联邦学习设置
+federate:
+  mode: standalone
+  client_num: 10  # 总共10个客户端
+  sample_client_num: 10  # 每轮全部参与
+  total_round_num: 50
+  share_local_model: False  # 不共享模型以模拟真实环境
+  method: FedAvg
+  resource_info_file: 'client_heterogeneous_config.pkl'  # 资源配置文件
+
+# 数据设置
+data:
+  root: data/
+  type: CIFAR10@torchvision
+  args: [{'download': True}]
+  splits: [0.8, 0.1, 0.1]
+  subsample: 1.0
+  transform: [
+    ['ToTensor'],
+    ['Normalize', {'mean': [0.4914, 0.4822, 0.4465], 
+                   'std': [0.2470, 0.2435, 0.2616]}]
+  ]
+  splitter: 'lda'  # 模拟非IID数据
+  splitter_args: [{'alpha': 0.5}]
+
+dataloader:
+  batch_size: 64  # 基础batch size，Tier-2和Tier-3会自动调整
+  shuffle: True
+  num_workers: 4
+
+# 模型设置
+model:
+  type: convnet2
+  hidden: 2048
+  out_channels: 10
+
+# 训练设置
+train:
+  local_update_steps: 5
+  batch_or_epoch: epoch
+  optimizer:
+    type: SGD
+    lr: 0.01
+    momentum: 0.9
+    weight_decay: 0.0005
+
+# 评估设置
+eval:
+  freq: 5
+  metrics: ['acc', 'correct']
+  best_res_update_round_wise_key: 'test_acc'
+
+# 损失函数
+criterion:
+  type: CrossEntropyLoss
+
+# Trainer类型
+trainer:
+  type: cvtrainer
